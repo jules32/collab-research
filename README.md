@@ -4,6 +4,6 @@ Research with my collaborator
 collaborator:
 Jeanette Clark
 
-This is Julie' information
+This is Jeanette's information.
 
-Writing on line 9
+Writing some stuff.
