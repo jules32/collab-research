@@ -5,6 +5,12 @@ date: "3/13/2018"
 output: html_document
 ---
 
+image:
+
+![](/Users/julialowndes/Desktop/Screen Shot 2018-03-05 at 4.48.28 PM.png)
+
+
+Hey, check out [our other page](https://jules32.github.io/collab-research/research)
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
