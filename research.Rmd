@@ -1,0 +1,31 @@
+---
+title: "Our Research"
+author: "Jeanette Clark"
+date: "3/13/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Our Research
+
+Check out these results!
+
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+library(ggplot2)
+library(grid)
+
+data <- data.frame(x = (0:12), y = (0:12))
+
+myplot <- ggplot(data, aes(x = x, y = y)) +
+  geom_point() + 
+  scale_x_continuous(expand = c(0, 0)) + 
+  scale_y_continuous(expand = c(0, 0))
+
+gt <- ggplot_gtable(ggplot_build(myplot))
+gt$layout$clip[gt$layout$name=="panel"] <- "off"
+grid.newpage() #adding this line will render it in RMarkdown
+grid.draw(gt)
+```
