@@ -1,0 +1,153 @@
+---
+title: "Tidy Coral Live"
+author: "Jeanette Clark"
+date: "3/13/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+## libraries
+library(tidyverse)
+library(janitor) # install.packages('janitor')
+library(skimr) # install.packages('skimr')
+library(stringr) # added when we needed it for benthic data
+
+## data filepaths/urls ----
+
+## benthic data
+benthic_url <- 'https://www.nodc.noaa.gov/archive/arc0054/0104255/1.1/data/0-data/cd08/100308OaAla03m.CSV'
+
+## buoy data
+buoy_url <- 'http://www.ndbc.noaa.gov/view_text_file.php?filename=mokh1h2010.txt.gz&dir=data/historical/stdmet/'
+```
+
+# Benthic Data
+
+```{r}
+benthic_raw <- read_csv(benthic_url)
+head(benthic_raw)
+```
+
+```{r}
+names(benthic_raw)
+```
+
+```{r}
+benthic <- benthic_raw %>% 
+  janitor::clean_names()
+
+names(benthic)
+```
+
+
+```{r}
+benthic <- benthic %>%
+  select(id_name, point, x, y, id_date)
+
+head(benthic)
+```
+
+```{r}
+benthic <- benthic %>%
+  mutate(date = gsub("#", "", id_date))
+
+head(benthic)
+```
+
+```{r}
+unique(benthic$id_name)
+```
+
+```{r}
+ggplot(benthic, aes(x = date, fill = id_name)) +
+  geom_bar()
+```
+
+Read in the data
+
+# Buoy Data
+
+```{r}
+buoy_raw <- read_table2(buoy_url)
+head(buoy_raw)
+```
+
+```{r}
+buoy <- buoy_raw
+```
+
+```{r}
+## 1. overwrite column names
+names(buoy) <- str_c(names(buoy),                  ## current header
+                  buoy %>% filter(`#YY` == "#yr"), ## row1 -- don't say buoy[1,] 
+                  sep = "_")                       ## separate by `_`
+
+## inspect
+names(buoy) ## Looks a lot better
+```
+
+```{r}
+## 2. clean up a bit more to get rid of the `#`s and the `/`s. 
+names(buoy) <- str_replace_all(names(buoy), "#", "")  # replace `#` with nothing 
+names(buoy) <- str_replace_all(names(buoy), "/", "_") # replace `/` with `_`
+
+## inspect to make sure it worked
+names(buoy)
+```
+
+
+```{r}
+## 3. remove redundant row with units
+buoy <- buoy %>%
+  filter(YY_yr != "#yr")
+
+#buoy$WTMP_degC[buoy$WTMP_degC == "999.0"] <- NA
+
+#buoy$WTMP_degC <- as.numeric(buoy$WTMP_degC)
+
+head(buoy)
+```
+
+```{r}
+ggplot(buoy, aes(WTMP_degC)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r}
+buoy <- buoy %>%
+  unite(date, c(YY_yr, MM_mo, DD_dy), sep = "-")
+
+head(buoy)
+```
+
+```{r}
+bb_join <- left_join(benthic, buoy, by = "date")
+
+bb_join %>% select(id_name, x, y, date, hh_hr, mm_mn, WTMP_degC) %>%
+  head()
+```
+```{r}
+buoy_daily <- buoy %>%
+  mutate(temp_clean = gsub("999.0", NA, WTMP_degC)) %>% 
+  mutate(temp_clean = as.numeric(temp_clean)) %>% # first need to get rid of 999's
+  group_by(date) %>%   # then group by date
+  summarise(mean_temp = mean(temp_clean, na.rm=T))  # then get mean temperature
+
+```
+
+```{r}
+head(buoy_daily)
+```
+
+```{r}
+bb_join <- left_join(benthic, buoy_daily, by = "date")
+```
+
+```{r}
+head(bb_join)
+```
